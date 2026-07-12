@@ -5,9 +5,10 @@
 //+------------------------------------------------------------------+
 #property copyright "Neo Malesa"
 #property link      "https://www.x.com/n30dyn4m1c"
-#property version   "1.04"
+#property version   "1.05"
 
 input ENUM_TIMEFRAMES TimeFrame = PERIOD_H4;
+input double WickFactor = 2.0;   // wick must exceed this multiple of the body
 
 // List of instruments (symbols) to loop through
 string symbols[] = {
@@ -19,37 +20,53 @@ string symbols[] = {
     "NZDCAD", "NZDCHF", "NZDJPY",
     "AUS200Cash", "BRENTCash", "CA60Cash", "China50Cash", "ChinaHCash", "EU50Cash", "FRA40Cash",
     "GER40Cash", "HK50Cash", "IT40Cash", "JP225Cash", "NETH25Cash", "NGASCash", "OILCash",
-    "SA40Cash", "SILVER", "SPAIN35Cash", "SWI20Cash", "Sing30Cash", "UK100Cash", "US100Cash",
+    "SA40Cash", "SPAIN35Cash", "SWI20Cash", "Sing30Cash", "UK100Cash", "US100Cash",
     "US2000Cash", "US30Cash", "US500Cash", "GerMid50Cash", "GerTech30Cash", "TaiwanCash",
     "BTCEUR", "BTCGBP", "BTCUSD", "ETHEUR", "ETHGBP", "ETHUSD",
-    "GOLD", "XAUUSD", "SILVER", "XAUEUR", "XPDUSD", "XPTUSD"
+    "GOLD", "SILVER", "XAUUSD", "XAUEUR", "XPDUSD", "XPTUSD"
 };
 
+datetime lastBarTime[];   // last closed bar already checked, per symbol
+
 int OnInit() {
+    ArrayResize(lastBarTime, ArraySize(symbols));
+    for (int i = 0; i < ArraySize(symbols); i++) {
+        SymbolSelect(symbols[i], true);   // ensure symbol is in Market Watch so data loads
+        lastBarTime[i] = 0;
+    }
+    EventSetTimer(30);   // timer keeps scanning even when the chart symbol has no ticks
     Print("CRT_TS_H4_EA initialized.");
     return INIT_SUCCEEDED;
 }
 
-void OnTick() {
-    static datetime lastChecked = 0;
-    if (TimeCurrent() - lastChecked < 600) return;
-    lastChecked = TimeCurrent();
+void OnDeinit(const int reason) {
+    EventKillTimer();
+}
 
+void OnTick() {}   // scanning is timer-driven
+
+void OnTimer() {
     for (int i = 0; i < ArraySize(symbols); i++) {
         string symbol = symbols[i];
 
-        // Require 3 bars for Turtle Soup pattern: Candle1, Candle2, and forming Candle3
+        // Require 3 bars for Turtle Soup pattern: Candle2, Candle1, and forming Candle0
         if (Bars(symbol, TimeFrame) < 3) continue;
 
+        // Evaluate each closed bar exactly once per symbol (no duplicate alerts)
+        datetime barTime = iTime(symbol, TimeFrame, 1);
+        if (barTime == 0 || barTime == lastBarTime[i]) continue;
+        lastBarTime[i] = barTime;
+
+        // Candle0: currently forming candle (entry reference)
         double o0 = iOpen(symbol, TimeFrame, 0);
 
-        // Candle1: pattern range
+        // Candle2: range candle
         double o2 = iOpen(symbol, TimeFrame, 2);
         double c2 = iClose(symbol, TimeFrame, 2);
         double h2 = iHigh(symbol, TimeFrame, 2);
         double l2 = iLow(symbol, TimeFrame, 2);
 
-        // Candle2: false breakout (TS candle)
+        // Candle1: false breakout (TS candle)
         double o1 = iOpen(symbol, TimeFrame, 1);
         double c1 = iClose(symbol, TimeFrame, 1);
         double h1 = iHigh(symbol, TimeFrame, 1);
@@ -67,29 +84,31 @@ void OnTick() {
         double lowerWick1 = MathMin(o1, c1) - l1;
         double upperWick1 = h1 - MathMax(o1, c1);
 
-        bool longLowerWick1 = lowerWick1 > 2.0 * body1;
-        bool longUpperWick1 = upperWick1 > 2.0 * body1;
+        bool longLowerWick1 = lowerWick1 > WickFactor * body1;
+        bool longUpperWick1 = upperWick1 > WickFactor * body1;
+
+        int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
 
         // Bullish Turtle Soup
         if (c2Bear && c1Bull && l1 < l2 && c1 > c2 && longLowerWick1) {
             double entry = o0;
-            string entryText = "Buy Below: " + DoubleToString(entry, _Digits);
+            string entryText = "Buy Below: " + DoubleToString(entry, digits);
             double sl = l1;
             double tp1 = (l2 + h2) / 2.0;
             double tp2 = h2;
             Alert(symbol + " H4: Bullish Turtle Soup detected.");
-            Alert(symbol + " " + entryText + " | SL: " + DoubleToString(sl, _Digits) + " | TP1: " + DoubleToString(tp1, _Digits) + " | TP2: " + DoubleToString(tp2, _Digits));
+            Alert(symbol + " " + entryText + " | SL: " + DoubleToString(sl, digits) + " | TP1: " + DoubleToString(tp1, digits) + " | TP2: " + DoubleToString(tp2, digits));
         }
 
         // Bearish Turtle Soup
         if (c2Bull && c1Bear && h1 > h2 && c1 < c2 && longUpperWick1) {
             double entry = o0;
-            string entryText = "Sell Above: " + DoubleToString(entry, _Digits);
+            string entryText = "Sell Above: " + DoubleToString(entry, digits);
             double sl = h1;
             double tp1 = (h2 + l2) / 2.0;
             double tp2 = l2;
             Alert(symbol + " H4: Bearish Turtle Soup detected.");
-            Alert(symbol + " " + entryText + " | SL: " + DoubleToString(sl, _Digits) + " | TP1: " + DoubleToString(tp1, _Digits) + " | TP2: " + DoubleToString(tp2, _Digits));
+            Alert(symbol + " " + entryText + " | SL: " + DoubleToString(sl, digits) + " | TP1: " + DoubleToString(tp1, digits) + " | TP2: " + DoubleToString(tp2, digits));
         }
     }
 }
