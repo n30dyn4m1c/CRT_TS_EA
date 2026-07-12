@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Neo Malesa"
 #property link      "https://www.x.com/n30dyn4m1c"
-#property version   "1.07"
+#property version   "1.08"
 #property strict
 
 input ENUM_TIMEFRAMES TimeFrame = PERIOD_CURRENT;
@@ -75,10 +75,11 @@ void CheckSymbol(const int idx,ENUM_TIMEFRAMES tf){
 
   datetime t=iTime(sym,tf,1);                        // closed bar only
   if(t==0 || t==lastBarTime[idx]) return;
-  lastBarTime[idx]=t;
 
   MqlRates rr[];
+  ArraySetAsSeries(rr,true);                         // rr[0]=last closed bar, rr[1]=prior bar
   if(CopyRates(sym,tf,1,Lookback+5,rr) < 2) return;  // need bar0 & bar1 at least
+  lastBarTime[idx]=t;                                // mark handled only after data is in
 
   int digits=(int)SymbolInfoInteger(sym,SYMBOL_DIGITS);
   double h2=rr[1].high, l2=rr[1].low;

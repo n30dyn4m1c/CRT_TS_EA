@@ -18,10 +18,13 @@ A multi-timeframe MetaTrader 5 EA suite for detecting high-probability Turtle So
 ## 🚀 Key Features
 
 - ✅ Detects 3-candle Turtle Soup setups (range → false breakout → reversal)
-- ✅ Long wick validation: wick ≥ 2× body
+- ✅ Long wick validation: wick ≥ 2× body (adjustable via `WickFactor` input)
 - ✅ Trade level alerts on H4, H1, & M15: Entry, SL, TP1, TP2
 - ✅ Multi-asset scanning from one chart
 - ✅ Pure price-action: no indicators used
+- ✅ One alert per closed bar per symbol (per-symbol memory, no duplicate alerts)
+- ✅ Timer-driven scanning: keeps working even if the chart symbol's market is closed
+- ✅ Auto-adds all scanned symbols to Market Watch on init
 - 🔜 Push/email/mobile alerts
 - 🔜 Auto-trading logic with risk controls
 - 🔜 On-chart dashboard for signal display
@@ -30,7 +33,7 @@ A multi-timeframe MetaTrader 5 EA suite for detecting high-probability Turtle So
 
 ## 📊 Turtle Soup Logic (H4, H1, M15 EA)
 
-The H4, H1, & M15 scripts follows strict 3-candle logic:
+The H4, H1, & M15 scripts follow strict 3-candle logic:
 - **Candle2**: Range candle
 - **Candle1**: False breakout candle with a long wick
 - **Candle0**: Currently forming candle (entry reference)
@@ -66,6 +69,9 @@ The H4, H1, & M15 scripts follows strict 3-candle logic:
 | `CRTTS_Daily.mq5`   | D1        | ≥ 2× body        | No            | Clean daily signal filter      |
 | `CRTTS_Weekly.mq5`  | W1        | ≥ 2× body        | No            | Long-term signal confirmation  |
 | `CRTTS_Monthly.mq5` | MN1       | ≥ 2× body        | No            | Macro-level reversals          |
+| `crt-ts.mq5`        | Any       | ≥ 3× body        | Yes           | Timeframe-selectable variant with 50% retrace filter |
+
+Wick requirements above are defaults; each EA exposes a `WickFactor` input.
 
 > All EAs are alert-only by default. No auto-trading yet.
 
@@ -88,7 +94,7 @@ The H4, H1, & M15 scripts follows strict 3-candle logic:
 
 - **M15**: Continuously during active sessions
 - **H4**: NY time – 1 AM, 5 AM, 9 AM or PM
-- **H4**: At the start of every trading hour
+- **H1**: At the start of every trading hour
 - **Daily**: At the start of the trading day
 - **Weekly**: Mondays after weekly open
 - **Monthly**: First calendar day of the month
@@ -136,7 +142,6 @@ Relationship between Range Candle (RC) and Turtle Soup Candle (TSC)
 - Filter: Require TS body < 50% of range body
 - Expand logic to multi-candle range breaks (2–5 bars)
 - Same-direction Turtle Soup (e.g. bullish candle + bullish wick)
-- Prevent duplicate alerts using per-symbol memory
 - Merge timeframes into one EA with toggle switches
 - Add dashboard with HTMX-style signal display
 - Push/email/mobile notifications
