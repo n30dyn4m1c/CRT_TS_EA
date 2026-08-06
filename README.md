@@ -1,159 +1,109 @@
-# 🐢🍲 Turtle Soup Detection EAs for MT5
+# CRT Turtle Soup EAs for MetaTrader 5
 
-A multi-timeframe MetaTrader 5 EA suite for detecting high-probability Turtle Soup reversal setups across over 60 forex, index, commodity, and crypto instruments. Developed for price action traders who seek clean, structured, wick-based entries without indicators.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Platform](https://img.shields.io/badge/Platform-MetaTrader%205-blue.svg)](https://www.metatrader5.com/)
+[![Language](https://img.shields.io/badge/Language-MQL5-orange.svg)](https://www.mql5.com/)
+[![Strategy](https://img.shields.io/badge/Strategy-Candle%20Range%20Theory-green.svg)](https://github.com/n30dyn4m1c/crt-turtlesoup-ea)
 
----
+**Multi-timeframe MetaTrader 5 Expert Advisors that detect Turtle Soup reversal setups across 60+ forex, index, commodity, and crypto instruments.**
 
-## 🧰 Tech Stack
+Built for price-action traders who want clean, wick-based entries without indicators. Alert-only by default — no auto-trading yet.
 
-- **Platform**: MetaTrader 5
-- **Language**: MQL5
-- **Alert System**: Terminal-based alerts (planned: push/email)
-- **Trade Logic**: Price-action, Turtle Soup reversal strategy
-- **Symbol Coverage**: 60+ FX pairs, indices, metals, crypto
-- **Timeframes**: M15, H1, H4, D1, W1, MN1
+## Features
 
----
+- Detects 3-candle Turtle Soup setups (range → false breakout → reversal)
+- Long wick validation: wick ≥ body × `WickFactor` (adjustable input)
+- Trade level alerts on H4, H1, and M15: Entry, SL, TP1, TP2
+- Multi-asset scanning from one chart (60+ symbols)
+- Pure price action — no indicators
+- One alert per closed bar per symbol (no duplicate spam)
+- Timer-driven scanning — keeps working even if the chart symbol’s market is closed
+- Auto-adds scanned symbols to Market Watch on init
 
-## 🚀 Key Features
+## Turtle Soup Logic (H4, H1, M15)
 
-- ✅ Detects 3-candle Turtle Soup setups (range → false breakout → reversal)
-- ✅ Long wick validation: wick ≥ 2× body (adjustable via `WickFactor` input)
-- ✅ Trade level alerts on H4, H1, & M15: Entry, SL, TP1, TP2
-- ✅ Multi-asset scanning from one chart
-- ✅ Pure price-action: no indicators used
-- ✅ One alert per closed bar per symbol (per-symbol memory, no duplicate alerts)
-- ✅ Timer-driven scanning: keeps working even if the chart symbol's market is closed
-- ✅ Auto-adds all scanned symbols to Market Watch on init
-- 🔜 Push/email/mobile alerts
-- 🔜 Auto-trading logic with risk controls
-- 🔜 On-chart dashboard for signal display
+Strict 3-candle pattern:
 
----
+| Candle | Role |
+|--------|------|
+| Candle2 | Range candle |
+| Candle1 | False breakout with a long wick |
+| Candle0 | Currently forming (entry reference) |
 
-## 📊 Turtle Soup Logic (H4, H1, M15 EA)
+**Trade levels**
 
-The H4, H1, & M15 scripts follow strict 3-candle logic:
-- **Candle2**: Range candle
-- **Candle1**: False breakout candle with a long wick
-- **Candle0**: Currently forming candle (entry reference)
+- **Entry** — open of Candle0 (buy below / sell above)
+- **SL** — wick extreme of Candle1
+- **TP1** — midpoint of Candle2 range
+- **TP2** — Candle2 extreme (opposite side of the setup)
 
-### Trade Levels
-- **Entry**: Open of Candle0 (Buy Below / Sell Above)
-- **SL**: Wick extreme of Candle1
-- **TP1**: Midpoint of Candle2 range
-- **TP2**: Candle2 extreme (opposite direction of the setup)
+**Bullish TS** — Candle2 bearish; Candle1 bullish, breaks Candle2 low, closes above Candle2 close, long lower wick  
+**Bearish TS** — Candle2 bullish; Candle1 bearish, breaks Candle2 high, closes below Candle2 close, long upper wick
 
-### Detection Conditions
-- **Bullish TS**:
-  - Candle2 is bearish
-  - Candle1 is bullish and breaks Candle2 low
-  - Candle1 closes above Candle2 close
-  - Candle1 has a long lower wick
+## Included Files
 
-- **Bearish TS**:
-  - Candle2 is bullish
-  - Candle1 is bearish and breaks Candle2 high
-  - Candle1 closes below Candle2 close
-  - Candle1 has a long upper wick
+| File | Timeframe | Default wick | Trade alerts | Notes |
+|------|-----------|--------------|--------------|-------|
+| `CRTTS_M15.mq5` | M15 | ≥ 3× body | Yes | High-frequency setups |
+| `CRTTS_H1.mq5` | H1 | ≥ 2× body | Yes | 3-candle logic + full alerts |
+| `CRTTS_H4.mq5` | H4 | ≥ 2× body | Yes | 3-candle logic + full alerts |
+| `CRTTS_Daily.mq5` | D1 | ≥ 2× body | No | Daily signal filter |
+| `CRTTS_Weekly.mq5` | W1 | ≥ 2× body | No | Longer-term confirmation |
+| `CRTTS_Monthly.mq5` | MN1 | ≥ 2× body | No | Macro-level reversals |
+| `crt-ts.mq5` | Any | ≥ 3× body | Yes | Timeframe-selectable + 50% retrace filter |
 
----
+Wick thresholds are defaults; each EA exposes a `WickFactor` input. All EAs are **alert-only** by default.
 
-## 🗂 Included Files
+## Setup
 
-| File                | Timeframe | Wick Requirement | Trade Alerts | Notes                          |
-|---------------------|-----------|------------------|---------------|--------------------------------|
-| `CRTTS_M15.mq5`     | M15       | ≥ 3× body        | Yes           | For high-frequency setups      |
-| `CRTTS_H4.mq5`      | H4        | ≥ 2× body        | Yes           | 3-candle logic + full alerts   |
-| `CRTTS_H1.mq5`      | H1        | ≥ 2× body        | Yes           | 3-candle logic + full alerts   |
-| `CRTTS_Daily.mq5`   | D1        | ≥ 2× body        | No            | Clean daily signal filter      |
-| `CRTTS_Weekly.mq5`  | W1        | ≥ 2× body        | No            | Long-term signal confirmation  |
-| `CRTTS_Monthly.mq5` | MN1       | ≥ 2× body        | No            | Macro-level reversals          |
-| `crt-ts.mq5`        | Any       | ≥ 3× body        | Yes           | Timeframe-selectable variant with 50% retrace filter |
+1. Open MetaTrader 5 → **File → Open Data Folder** → copy the `.mq5` files into `MQL5/Experts/`.
+2. Open MetaEditor (`F4`), compile each EA (`F7`).
+3. In Navigator, drag an EA onto any chart and enable **Algo Trading**.
+4. Alerts pop up when a valid pattern is detected on a closed bar.
 
-Wick requirements above are defaults; each EA exposes a `WickFactor` input.
+## When to Run
 
-> All EAs are alert-only by default. No auto-trading yet.
+| Timeframe | Suggested use |
+|-----------|----------------|
+| M15 | Continuously during active sessions |
+| H1 | Around the open of each trading hour |
+| H4 | Near the open of each H4 candle (e.g. NY 01:00, 05:00, 09:00) |
+| Daily | After the daily open |
+| Weekly | Mondays after the weekly open |
+| Monthly | First trading day of the month |
 
-
----
-
-## 🛠️ Setup Instructions
-
-1. Open MetaTrader 5  
-2. Press `F4` to open MetaEditor  
-3. Copy `.mq5` files into the `MQL5/Experts` directory  
-4. Compile your EA (`Right-click → Compile`)  
-5. Open MT5 → Navigator → Drag the EA onto any chart  
-6. Enable **Algo Trading**  
-7. Wait for alerts (pop-up) when a valid pattern is detected
-
----
-
-## ⏰ When to Run
-
-- **M15**: Continuously during active sessions
-- **H4**: NY time – 1 AM, 5 AM, 9 AM or PM
-- **H1**: At the start of every trading hour
-- **Daily**: At the start of the trading day
-- **Weekly**: Mondays after weekly open
-- **Monthly**: First calendar day of the month
-
----
-
-## 📸 Screenshot
+## Screenshot
 
 ![Turtle Soup Alert](screenshot.png)
 
----
+## Notes from Use
 
-## 🎓 Lessons Learned
+- Prefer large range candles; thin ranges are lower quality.
+- A Turtle Soup candle that retraces more than ~50% of the range candle is often invalid.
+- Prefer instruments with tight spreads; wide-spread names generate noisy signals.
+- Symbols must be in Market Watch for scanning (the EAs auto-add their list on init).
+- Non-24h markets only alert while the session is open.
+- HTF premium/discount context pairs well with LTF Turtle Soup (e.g. Daily PD → H1 TS, H4 PD → M15 TS).
 
-- 3-candle CRTs are easier to encode. Multiple candle CRT setups will need additional logic
-- Size of the range candle needs to be big
-- Backtest on demo first for at least a week
-- Filter out only high quality CRT & TS setups, ignore low quality setups
-- Consider removing instruments with large spread
-- Consider first entry above/below range candle high/low, and second entry above/below current candle open
-- Turtle soup candle should not reach more than 50% of range candle, then it is invalid
-- Note instruments that do not trade 24 hours, EA will not trigger if market is closed.
-- Also if loaded in a live isntrument, EA will continuously give alert for an instrument if market closed with a setup formation
-- Only valid range is a thick down-closed or thick up-closed candle
-- EA might need instrument to be opened in Market Watch, for it to scan, so open all
+## Roadmap
 
-Relationship between Range Candle (RC) and Turtle Soup Candle (TSC)
-- For RC body incl wick must be larger than TSC body incl wick, let's say 2x
-- TSC must not reach 50% and 100% CR after TS
-- Check IRL-ERL confluence when a TS is detected
-- Valid TS sweeps a high or a low
-- Entry models: LTF CISD
+- Timed H4 scans (first 30 minutes of each candle)
+- Hard filter: TS body < 50% of range body
+- Multi-candle range breaks (2–5 bars)
+- Merged multi-timeframe EA with toggles
+- Push / email / mobile notifications
+- Optional auto-trading with SL/TP and position sizing
+- On-chart signal dashboard
 
-- Timeframe alignment for HTF Premium/Discount Array to LTF TS
-- Monthly PD array - Daily TS
-- Weekly PD array - 4H TS
-- Daily PD array -  1H TS
-- 4H PD array - 15M TS
+## Disclaimer
 
----
+For educational and research use. Trading leveraged markets carries substantial risk of loss. Backtest and forward-test on demo before any live capital. Past performance is not indicative of future results.
 
-## 🎯 Future Improvements
+## License
 
-- Timed trigger: H4 scans only during first 30 min of each candle
-- Filter: Require TS body < 50% of range body
-- Expand logic to multi-candle range breaks (2–5 bars)
-- Same-direction Turtle Soup (e.g. bullish candle + bullish wick)
-- Merge timeframes into one EA with toggle switches
-- Add dashboard with HTMX-style signal display
-- Push/email/mobile notifications
-- Add trading logic with SL/TP and lot sizing
+This project is licensed under the [MIT License](LICENSE).
 
----
+## Author
 
-## 📝 License & Acknowledgments
-
-- © 2025 **Neo Malesa** – [@n30dyn4m1c on X](https://www.x.com/n30dyn4m1c)  
-- Built with 💚 for MT5 CRT traders   
-- Strategy inspired by Turtle Soup, coined by Linda Raschke, and Candle Range Theory by Romeo
-
----
-
+**Neo Malesa** — [@n30dyn4m1c](https://x.com/n30dyn4m1c)  
+Strategy inspired by Turtle Soup (Linda Raschke) and Candle Range Theory (Romeo).
